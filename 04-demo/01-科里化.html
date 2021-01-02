@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    // 函数科里化应用：判断vue中的标签是否为内置标签
+    const tags = 'div,p,ul,li,h1,h2,h3,img,a'.split(',');
+    function makeMap(keys) {
+      // 变为set集合
+      let set = {};
+      keys.forEach(key => set[key] = true);
+      console.log(set);
+
+      return function(tagName) {
+        return !!set[tagName.toLowerCase()];
+      }
+    }
+
+    // isHtmlTag是makeMap返回的函数
+    let isHtmlTag = makeMap(tags);
+    console.log(isHtmlTag('div'));
+
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    // 通过‘XX.XX.X’这种路径方式访问对象 -- 函数科里化
+    function createGetValueByPath(path) {
+      const paths = path.split('.');
+      return function getValueByPath(obj) {
+        // let res = obj;
+        // let prop;
+        // while(prop = paths.shift()) {
+        //   res = res[prop];
+        // }
+        // return res;
+
+        paths.unshift(obj);
+        let res = paths.reduce((pre, cur) => {
+          return pre[cur];
+        });
+        return res;
+      }
+    }
+    let getValueByPath = createGetValueByPath('a.b.c');
+
+    const o = {
+      a: {
+        b: {
+          c: 'hello 科里化~'
+        }
+      }
+    };
+
+    // let res = getValueByPath(o, 'a.b.c');
+    let res = getValueByPath(o);
+    console.log(res);
+  </script>
+</body>
+</html>

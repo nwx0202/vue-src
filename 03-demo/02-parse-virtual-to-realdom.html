@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="root">
+    <div>
+      <div class="aa">
+        <div class="aa1" id="bb1">hello1</div>
+        <div class="aa1">hello2</div>
+        <div class="aa1">hello3</div>
+      </div>
+      <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // 为什么使用virtual dom？ 性能
+    // 虚拟dom节点类
+    class VNode {
+      constructor(tag, data, value, type) {
+        this.tag = tag && tag.toLowerCase();
+        this.data = data;
+        this.value = value;
+        this.type = type;
+        this.children = [];
+      }
+
+      appendChild(vnode) {
+        this.children.push(vnode);
+      }
+    }
+
+    // 使用递归 来遍历DOM元素，生成虚拟DOM
+    // Vue源码使用的是栈结构，使用栈存储父元素，来实现递归生成
+    function getVNode(node) {
+      let nodeType = node.nodeType;
+      let _vNode = null;
+      if (nodeType === 1) {
+        // 元素
+        const nodeName = node.nodeName;
+        const attrs = node.attributes;
+        let _attrObj = {};
+        for (let i = 0; i < attrs.length; i ++) {
+          _attrObj[attrs[i].nodeName] = attrs[i].nodeValue;
+        }
+        _vNode = new VNode(nodeName, _attrObj, undefined, nodeType);
+
+        // 如果元素有子节点
+        const childNodes = node.childNodes;
+        for (let i = 0; i < childNodes.length; i++) {
+          _vNode.appendChild(getVNode(childNodes[i]));
+        }
+      } else if (nodeType === 3) {
+        // 文本节点
+        const value = node.nodeValue;
+        _vNode = new VNode(undefined, undefined, value, nodeType);
+      }
+      return _vNode;
+    }
+    
+    const root = document.querySelector('#root');
+    const vNode = getVNode(root);
+    // console.log(vNode);
+
+    // 将vNode转换成真正的DOM
+    function parseVNode(vnode) {
+      const nodeType = vnode.type;
+      let _node = null;
+      if (nodeType === 1) {
+        // 元素节点
+        // 1. 创建元素
+        const nodeName = vnode.tag;
+        _node = document.createElement(nodeName);
+        // 2. 设置属性
+        const data = vnode.data;
+
+        // for in 会遍历继承的属性
+        // for(let i in data) {
+        //   _node.setAttribute(i, data[i]);
+        // }
+        Object.keys(data).forEach(attr => {
+          _node.setAttribute(attr, data[attr]);
+        });
+        // 3. 循环子元素
+        const childNodes = vnode.children;
+        if (childNodes.length) {
+          for (let i = 0; i < childNodes.length; i++) {
+            _node.appendChild(parseVNode(childNodes[i]));
+          }
+        }
+      } else if (nodeType === 3) {
+        // 文本节点
+        const value = vnode.value;
+        _node = document.createTextNode(value);
+      }
+      return _node;
+    }
+
+    // const vnode = {
+    //   type: 1,
+    //   tag: 'div',
+    //   data: {
+    //     id: 'app'
+    //   },
+    //   value: undefined,
+    //   children: [{
+    //     type: 1,
+    //     tag: 'ul',
+    //     data: {
+    //       id: 'aa'
+    //     },
+    //     value: undefined,
+    //     children: [
+    //       {
+    //         type: 1,
+    //         tag: 'li',
+    //         data: {
+    //           id: 'li1'
+    //         },
+    //         value: undefined,
+    //         children: [{
+    //           type: 3,
+    //           tag: undefined,
+    //           data: undefined,
+    //           value: 'li1',
+    //         }]
+    //       },
+    //       {
+    //         type: 1,
+    //         tag: 'li',
+    //         data: {
+    //           id: 'li2'
+    //         },
+    //         value: undefined,
+    //         children: [{
+    //           type: 3,
+    //           tag: undefined,
+    //           data: undefined,
+    //           value: 'li2',
+    //         }]
+    //       }
+    //     ]
+    //   }]
+    // };
+    
+    const vnode = getVNode(document.querySelector('#root'))
+    const node = parseVNode(vnode);
+    console.log(node);
+  </script>
+</body>
+</html>

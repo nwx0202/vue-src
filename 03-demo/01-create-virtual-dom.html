@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="root">
+    <div>
+      <div class="aa">
+        <div class="aa1" id="bb1">hello1</div>
+        <div class="aa1">hello2</div>
+        <div class="aa1">hello3</div>
+      </div>
+      <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // 为什么使用virtual dom？ 性能
+    // 虚拟dom节点类
+    class VNode {
+      constructor(tag, data, value, type) {
+        this.tag = tag && tag.toLowerCase();
+        this.data = data;
+        this.value = value;
+        this.type = type;
+        this.children = [];
+      }
+
+      appendChild(vnode) {
+        this.children.push(vnode);
+      }
+    }
+
+    // 使用递归 来遍历DOM元素，生成虚拟DOM
+    // Vue源码使用的是栈结构，使用栈存储父元素，来实现递归生成
+    function getVNode(node) {
+      let nodeType = node.nodeType;
+      let _vNode = null;
+      if (nodeType === 1) {
+        // 元素
+        const nodeName = node.nodeName;
+        const attrs = node.attributes;
+        console.log(attrs);
+        let _attrObj = {};
+        for (let i = 0; i < attrs.length; i ++) {
+          _attrObj[attrs[i].nodeName] = attrs[i].nodeValue;
+        }
+        _vNode = new VNode(nodeName, _attrObj, undefined, nodeType);
+
+        // 如果元素有子节点
+        const childNodes = node.childNodes;
+        for (let i = 0; i < childNodes.length; i++) {
+          _vNode.appendChild(getVNode(childNodes[i]));
+        }
+      } else if (nodeType === 3) {
+        // 文本节点
+        const value = node.nodeValue;
+        _vNode = new VNode(undefined, undefined, value, nodeType);
+      }
+      return _vNode;
+    }
+    
+    const root = document.querySelector('#root');
+    const vNode = getVNode(root);
+    console.log(vNode);
+  </script>
+</body>
+</html>

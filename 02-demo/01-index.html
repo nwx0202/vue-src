@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="root">
+    <p>{{name}}</p>
+    <p>{{message}}</p>
+  </div>
+
+  <script>
+    const rMastuch = /\{\{(.+?)\}\}/g;
+
+    // 将数据放到模板中，递归
+    function compiler(template, data) {
+      let childNodes = template.childNodes;
+      for(let i = 0; i < childNodes.length; i++) {
+        let nodeType = childNodes[i].nodeType;
+        // nodeType 1 元素节点；3 文本节点
+        if (nodeType === 3) {
+          let txt = childNodes[i].nodeValue;
+          txt = txt.replace(rMastuch, (m, n) => {
+            let key = n.trim();
+            let value = data[key];
+            return value;
+          });
+
+          // txt 现在和DOM没有关系
+          childNodes[i].nodeValue = txt;
+          console.log(childNodes[i]);
+        } else if (nodeType === 1) {
+          compiler(childNodes[i], data);
+        }
+      }
+    }
+
+    function NNVue(options) {
+
+      console.log(options);
+      // 习惯：内部的数据使用下划线开头，制度属性用$开头
+      this._el = options.el;
+      this._data = options.data;
+
+      // 准备工作（准备模板，数据）
+      this.$el = this._templateDOM = document.querySelector(this._el);
+      console.log(this._templateDOM);
+      this._parent = this._templateDOM.parentNode;
+
+      // 渲染工作
+      this.render();
+    }
+
+    // 将模板结合数据，得到HTML，加到页面中
+    NNVue.prototype.render = function() {
+      this.compiler();
+    }
+
+    // 编译：将模板与数据结合，得到真正的DOM元素
+    NNVue.prototype.compiler = function() {
+      // 模板拷贝得到一个准DOM
+      let realHTMLDOM = this._templateDOM.cloneNode(true);
+      compiler(realHTMLDOM, this._data);
+      // 更新页面
+      this.update(realHTMLDOM);
+    }
+
+    // 将DOM元素放到页面中
+    NNVue.prototype.update = function(real) {
+      this._parent.replaceChild(real, document.querySelector('#root'));
+    }
+
+    // 参考Vue的用法
+    const app = new NNVue({
+      el: '#root',
+      data: {
+        name: 'nienie',
+        message: 'A gilr.'
+      }
+    });
+  </script>
+</body>
+</html>

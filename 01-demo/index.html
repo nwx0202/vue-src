@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="root">
+    <p>{{name}}</p>
+    <p>{{message}}</p>
+  </div>
+
+  <script>
+    // 1. 拿到HTML模板
+    // 2. 拿到Vue数据（data）
+    // 3. 将数据和模板结合，得到HTML元素（DOM元素）
+    // 4. 替换到页面中
+
+    const rMastuch = /\{\{(.+?)\}\}/g;
+
+    let tmpNode = document.querySelector('#root');
+    let data = {
+      name: '一个新name',
+      message: '消息'
+    };
+    // 将数据放到模板中，递归
+    function compiler(template, data) {
+      let childNodes = template.childNodes;
+      for(let i = 0; i < childNodes.length; i++) {
+        let nodeType = childNodes[i].nodeType;
+        // nodeType 1 元素节点；3 文本节点
+        if (nodeType === 3) {
+          let txt = childNodes[i].nodeValue;
+          txt = txt.replace(rMastuch, (m, n) => {
+            let key = n.trim();
+            let value = data[key];
+            return value;
+          });
+
+          // txt 现在和DOM没有关系
+          childNodes[i].nodeValue = txt;
+          console.log(childNodes[i]);
+        } else if (nodeType === 1) {
+          compiler(childNodes[i], data);
+        }
+      }
+    }
+
+    const generateNode = tmpNode.cloneNode(true);
+    compiler(generateNode, data);
+    console.log(tmpNode);
+    console.log(generateNode);
+
+    root.parentNode.replaceChild(generateNode, tmpNode);
+  </script>
+</body>
+</html>

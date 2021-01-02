@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    // 通过‘XX.XX.X’这种路径方式访问对象
+    function getValueByPath(obj, path) {
+      const paths = path.split('.');
+      // let res = obj;
+      // let prop;
+      // while(prop = paths.shift()) {
+      //   res = res[prop];
+      // }
+      // return res;
+
+      paths.unshift(obj);
+      let res = paths.reduce((pre, cur) => {
+        return pre[cur];
+      });
+      return res;
+    }
+
+    const o = {
+      a: {
+        b: {
+          c: 'hello~'
+        }
+      }
+    };
+
+    let res = getValueByPath(o, 'a.b.c');
+    console.log(res);
+  </script>
+</body>
+</html>
