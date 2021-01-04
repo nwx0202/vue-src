@@ -6,6 +6,152 @@
   <title>Document</title>
 </head>
 <body>
-  
+  <div id="root">
+    <div>
+      <div class="aa">
+        <div class="aa1" id="bb1">{{name}}</div>
+        <div class="aa1">{{age}}</div>
+        <div class="aa1">{{gender}}</div>
+      </div>
+      <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // 虚拟DOM构造函数
+    class VNode {
+      constructor(tag, data, value, type) {
+        this.tag = tag && tag.toLowerCase();
+        this.data = data;
+        this.value = value;
+        this.type = type;
+        this.children = [];
+      }
+
+      appendChild(vnode) {
+        this.children.push(vnode);
+      }
+    }
+
+    // 由HTML DOM 生成虚拟DOM：可以看做compiler函数
+    function getVNode(node) {
+      let nodeType = node.nodeType;
+      let _vNode = null;
+      if (nodeType === 1) {
+        // 元素
+        const nodeName = node.nodeName;
+        const attrs = node.attributes;
+        let _attrObj = {};
+        for (let i = 0; i < attrs.length; i ++) {
+          _attrObj[attrs[i].nodeName] = attrs[i].nodeValue;
+        }
+        _vNode = new VNode(nodeName, _attrObj, undefined, nodeType);
+
+        // 如果元素有子节点
+        const childNodes = node.childNodes;
+        for (let i = 0; i < childNodes.length; i++) {
+          _vNode.appendChild(getVNode(childNodes[i]));
+        }
+      } else if (nodeType === 3) {
+        // 文本节点
+        const value = node.nodeValue;
+        _vNode = new VNode(undefined, undefined, value, nodeType);
+      }
+      return _vNode;
+    }
+
+    let rMastuch = /\{\{(.+?)\}\}/g;
+
+    // 根据路径获取vue的data的数据
+    function getValueByPath(obj, path) {
+      const paths = path.split('.');
+      paths.unshift(obj);
+      let res = paths.reduce((pre, cur) => {
+        return pre[cur];
+      });
+      return res;
+    }
+
+    // 将带有坑的VNode与数据结合，得到填充后的VNode（模拟AST转到VNode）
+    function combine(vnode, data) {
+      const _type = vnode.type;
+      const _data = vnode.data;
+      let _value = vnode.value;
+      const _tag = vnode.tag;
+      const _children = vnode.children;
+
+      let _vnode = null;
+      if (_type === 1) {
+        // 元素节点
+        _vnode = new VNode(_tag, _data, _value, _type);
+
+        _children.forEach(child => {
+          _vnode.appendChild(combine(child, data));
+        });
+      } else if (_type === 3) {
+        // 文本节点
+        // 对文本节点的内容进行处理
+        _value = _value.replace(rMastuch, (_, g) => {
+          return getValueByPath(data, g.trim());
+        });
+        _vnode = new VNode(_tag, _data, _value, _type);
+      }
+    }
+
+    function NNVue(options) {
+      this._data = options.data;
+      // vue中是字符串
+      this._template = document.querySelector(options.el);
+
+      // 挂载
+      this.mount();
+    }
+
+    NNVue.prototype.mount = function() {
+      // 提供一个render方法，生成虚拟DOM
+      this.render = this.createRenderFn();
+
+      this.mountComponent();
+    }
+
+    NNVue.prototype.mountComponent = function() {
+      // 执行mountComponent()方法
+      let mount = () => {
+        this.update(this.render());
+      }
+      // 这边应该交给watcher调用
+      mount.call(this);
+    }
+
+    // 生成render函数，目的是缓存抽象语法树（这边使用虚拟DOM来模拟）
+    NNVue.prototype.createRenderFn = function() {
+      let ast = getVNode(this._template);
+
+      // vue：将AST + data => VNode
+      // 我们：带坑的VNode + data => 含有数据的VNode
+      return function render() {
+        return combine(ast, this._data);
+      }
+    }
+
+    // 将虚拟DOM渲染到页面中（diff算法）
+    NNVue.prototype.update = function() {
+
+    }
+
+    let app = new NNVue({
+      el: '#root',
+      data: {
+        name: 'NN',
+        age: 18,
+        gender: 'female'
+      }
+    });
+
+  </script>
 </body>
 </html>
